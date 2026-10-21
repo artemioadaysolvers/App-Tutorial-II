@@ -1,0 +1,20 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "montecarlo_users",
+      "fieldPath": "experiments",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "montecarlo_users",
+      "fieldPath": "daily",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "montecarlo_users",
+      "fieldPath": "active",
+      "indexes": []
+    }
+  ]
+}

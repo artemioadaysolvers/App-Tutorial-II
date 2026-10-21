@@ -1,0 +1,14 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+local.properties
+google-services.json
+service-account*.json
+*.keystore
+!debug.keystore
+*.jks
+mobile/src/config.ts
+**/build/
+**/.gradle/
+**/.cxx/

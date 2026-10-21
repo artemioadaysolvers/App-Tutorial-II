@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?Define tu PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /credentials/adc.json
+    volumes:
+      - ${ADC_FILE:?Ruta absoluta del archivo ADC}:/credentials/adc.json:ro

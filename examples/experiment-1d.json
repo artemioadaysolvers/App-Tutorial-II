@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "title": "Normal m\u00c3\u00a1s uniforme",
+  "samples": 100,
+  "variables": [
+    {
+      "name": "X1",
+      "distribution": "normal",
+      "params": {
+        "mean": 10,
+        "std": 2
+      },
+      "domain": {}
+    },
+    {
+      "name": "X2",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 5
+      },
+      "domain": {}
+    }
+  ],
+  "expressions": [
+    {
+      "op": "add",
+      "args": [
+        {
+          "var": "X1"
+        },
+        {
+          "op": "mul",
+          "args": [
+            {
+              "const": 2
+            },
+            {
+              "var": "X2"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
