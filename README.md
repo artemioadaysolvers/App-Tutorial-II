@@ -1,4 +1,3 @@
-Actualización del código (27/10/2026): consulta [los cambios y rangos vigentes](docs/CAMBIOS.md) y [las comprobaciones](docs/VERIFICACION.md). El PDF incluido corresponde al manual original de instalación.
 
 Tutorial para App Móviles II 
 
