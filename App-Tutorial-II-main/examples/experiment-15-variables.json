@@ -1,0 +1,249 @@
+{
+  "version": 2,
+  "title": "Quince variables, cinco por componente",
+  "samples": 100,
+  "variables": [
+    {
+      "name": "X1",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X2",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X3",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X4",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X5",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X6",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X7",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X8",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X9",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X10",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X11",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X12",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X13",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X14",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    },
+    {
+      "name": "X15",
+      "distribution": "uniform",
+      "params": {
+        "low": 0,
+        "high": 10
+      },
+      "domain": {}
+    }
+  ],
+  "expressions": [
+    {
+      "op": "add",
+      "args": [
+        {
+          "op": "add",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "var": "X1"
+                    },
+                    {
+                      "var": "X2"
+                    }
+                  ]
+                },
+                {
+                  "var": "X3"
+                }
+              ]
+            },
+            {
+              "var": "X4"
+            }
+          ]
+        },
+        {
+          "var": "X5"
+        }
+      ]
+    },
+    {
+      "op": "add",
+      "args": [
+        {
+          "op": "add",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "var": "X6"
+                    },
+                    {
+                      "var": "X7"
+                    }
+                  ]
+                },
+                {
+                  "var": "X8"
+                }
+              ]
+            },
+            {
+              "var": "X9"
+            }
+          ]
+        },
+        {
+          "var": "X10"
+        }
+      ]
+    },
+    {
+      "op": "add",
+      "args": [
+        {
+          "op": "add",
+          "args": [
+            {
+              "op": "add",
+              "args": [
+                {
+                  "op": "add",
+                  "args": [
+                    {
+                      "var": "X11"
+                    },
+                    {
+                      "var": "X12"
+                    }
+                  ]
+                },
+                {
+                  "var": "X13"
+                }
+              ]
+            },
+            {
+              "var": "X14"
+            }
+          ]
+        },
+        {
+          "var": "X15"
+        }
+      ]
+    }
+  ]
+}

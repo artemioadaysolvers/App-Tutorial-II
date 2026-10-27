@@ -1,7 +1,13 @@
+import { MAX_VARIABLES_PER_COMPONENT } from './distributions';
 export type Expr =
   | { const: number }
   | { var: string }
   | { op: string; args: Expr[] };
+export function referencedVariables(n: Expr): Set<string> {
+  if ('var' in n) return new Set([n.var]);
+  if ('const' in n) return new Set();
+  return new Set(n.args.flatMap(a => [...referencedVariables(a)]));
+}
 const functions = new Set(['abs', 'sqrt', 'log', 'exp', 'sin', 'cos']);
 export function parseExpression(source: string, names: string[]): Expr {
   if (!source.trim() || source.length > 500)
@@ -77,10 +83,12 @@ export function parseExpression(source: string, names: string[]): Expr {
   const ast = expression();
   if (pos !== tokens.length)
     throw Error('Revisa operadores. Ejemplo: 2*X1 + X2.');
-  function hasVar(n: Expr): boolean {
-    return 'var' in n || ('args' in n && n.args.some(hasVar));
-  }
-  if (!hasVar(ast)) throw Error('Incluye al menos una variable aleatoria.');
+  const refs = referencedVariables(ast);
+  if (!refs.size) throw Error('Incluye al menos una variable aleatoria.');
+  if (refs.size > MAX_VARIABLES_PER_COMPONENT)
+    throw Error(
+      'Cada componente admite como máximo 5 variables aleatorias distintas.',
+    );
   return ast;
 }
 export function formatExpression(n: Expr): string {

@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "title": "Lognormal: log-location y log-scale",
+  "samples": 100,
+  "variables": [
+    {
+      "name": "X1",
+      "distribution": "lognormal",
+      "params": {
+        "mu": 0,
+        "sigma": 0.25
+      },
+      "domain": {}
+    }
+  ],
+  "expressions": [
+    {
+      "var": "X1"
+    }
+  ]
+}

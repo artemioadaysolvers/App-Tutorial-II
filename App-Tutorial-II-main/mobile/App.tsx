@@ -27,8 +27,17 @@ import {
 import { config } from './src/config';
 import { api, Experiment, Spec, Summary, Usage, components } from './src/api';
 import JointHistogram from './src/JointHistogramChart';
-import { distributions, makeVariable, Variable } from './src/distributions';
-import { formatExpression, parseExpression } from './src/expression';
+import {
+  distributions,
+  makeVariable,
+  Variable,
+  MAX_VARIABLES_PER_COMPONENT,
+} from './src/distributions';
+import {
+  formatExpression,
+  parseExpression,
+  referencedVariables,
+} from './src/expression';
 import { histogram } from './src/histogram';
 
 const message = (e: unknown) =>
@@ -86,7 +95,11 @@ function describeVariable(v: Variable): string {
   return distributions
     .find(d => d.id === v.distribution)!
     .fields.map(([key, label]) => {
-      const value = v.params[key];
+      const value =
+        v.params[key] ??
+        (v.distribution === 'lognormal' && key === 'mu'
+          ? v.params.mean
+          : undefined);
       return `${label}: ${Array.isArray(value) ? value.join(', ') : value}`;
     })
     .join('\n');
@@ -171,8 +184,15 @@ function AppContent() {
   }
   function addVariable() {
     try {
-      if (vars.length >= 3) throw Error('Máximo 3 variables en total.');
-      const name = Array.from({ length: 3 }, (_, i) => `X${i + 1}`).find(
+      if (vars.length >= MAX_VARIABLES_PER_COMPONENT * expressions.length)
+        throw Error(
+          `Máximo ${
+            MAX_VARIABLES_PER_COMPONENT * expressions.length
+          } variables para ${
+            expressions.length
+          } componente(s); 5 distintas por componente.`,
+        );
+      const name = Array.from({ length: 15 }, (_, i) => `X${i + 1}`).find(
         n => !vars.some(v => v.name === n),
       )!;
       setVars([...vars, makeVariable(name, dist, fields, min, max)]);
@@ -199,6 +219,17 @@ function AppContent() {
       ),
       samples: 100,
     };
+    if (vars.length > MAX_VARIABLES_PER_COMPONENT * expressions.length)
+      throw Error(
+        'Demasiadas variables para el número de componentes: máximo 5 por componente.',
+      );
+    const used = new Set(
+      spec.expressions.flatMap(e => [...referencedVariables(e)]),
+    );
+    if (vars.some(v => !used.has(v.name)))
+      throw Error(
+        'Usa todas las variables definidas o quita las que no se utilizan.',
+      );
     if (
       !pending.current ||
       JSON.stringify(pending.current.spec) !== JSON.stringify(spec)
@@ -287,7 +318,7 @@ function AppContent() {
           <View style={s.card}>
             <Text style={s.cardTitle}>Tu pequeño laboratorio</Text>
             <Text style={s.body}>
-              12 distribuciones{'\n'}3 variables por experimento{'\n'}100
+              12 distribuciones{'\n'}5 variables por componente{'\n'}100
               resultados por simulación
             </Text>
           </View>
@@ -448,7 +479,8 @@ function AppContent() {
           <>
             <Text style={s.h1}>Nuevo experimento</Text>
             <Text style={s.note}>
-              01 / DEFINE LAS VARIABLES ({vars.length}/3)
+              01 / DEFINE LAS VARIABLES ({vars.length}/
+              {MAX_VARIABLES_PER_COMPONENT * expressions.length})
             </Text>
             {vars.map(v => (
               <View key={v.name} style={s.card}>
@@ -470,7 +502,7 @@ function AppContent() {
                 </Text>
               </View>
             ))}
-            {vars.length < 3 && (
+            {vars.length < MAX_VARIABLES_PER_COMPONENT * expressions.length && (
               <View style={s.card}>
                 <Text style={s.label}>Distribución</Text>
                 <Button
@@ -506,7 +538,9 @@ function AppContent() {
                 <Button label="Agregar variable" onPress={addVariable} />
               </View>
             )}
-            <Text style={s.note}>02 / ESCRIBE LA EXPRESIÓN</Text>
+            <Text style={s.note}>
+              02 / COMPONENTES: HASTA 5 VARIABLES DISTINTAS CADA UNO
+            </Text>
             <Field
               label="Nombre del experimento"
               value={title}
@@ -530,7 +564,11 @@ function AppContent() {
             {expressions.map((expression, i) => (
               <Field
                 key={i}
-                label={`Componente ${['X', 'Y', 'Z'][i]}: expresión matemática`}
+                label={`Componente ${
+                  ['X', 'Y', 'Z'][i]
+                }: expresión matemática (${
+                  new Set(expression.match(/\bX\d+\b/g) || []).size
+                }/5 variables)`}
                 value={expression}
                 onChange={text =>
                   setExpressions(old => old.map((v, j) => (i === j ? text : v)))
@@ -545,10 +583,12 @@ function AppContent() {
             <View style={s.card}>
               <Text style={s.cardTitle}>100 realizaciones conjuntas</Text>
               <Text style={s.body}>
-                Variables base independientes. Cada realización evalúa todas las
+                Hasta 5 variables distintas por componente, 15 en 3D. Variables
+                base independientes. Cada realización evalúa todas las
                 componentes con los mismos valores de las variables. Se guardan
                 100 vectores ({expressions.length * 100} números), sin valores
-                intermedios.
+                intermedios. Los componentes finales se truncan hacia cero a 3
+                decimales antes de guardarse.
               </Text>
             </View>
             <Button

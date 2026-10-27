@@ -1,14 +1,14 @@
 {
   "version": 2,
-  "title": "Normal m\u00c3\u00a1s uniforme",
+  "title": "Normal más uniforme",
   "samples": 100,
   "variables": [
     {
       "name": "X1",
       "distribution": "normal",
       "params": {
-        "mean": 10,
-        "std": 2
+        "mean": 5,
+        "std": 0.5
       },
       "domain": {}
     },
@@ -17,7 +17,7 @@
       "distribution": "uniform",
       "params": {
         "low": 0,
-        "high": 5
+        "high": 1
       },
       "domain": {}
     }
@@ -39,6 +39,28 @@
               "var": "X2"
             }
           ]
+        }
+      ]
+    },
+    {
+      "op": "sub",
+      "args": [
+        {
+          "var": "X1"
+        },
+        {
+          "var": "X2"
+        }
+      ]
+    },
+    {
+      "op": "mul",
+      "args": [
+        {
+          "var": "X1"
+        },
+        {
+          "var": "X2"
         }
       ]
     }

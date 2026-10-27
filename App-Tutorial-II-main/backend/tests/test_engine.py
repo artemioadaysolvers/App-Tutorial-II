@@ -3,16 +3,16 @@ import math
 import time
 import unittest
 import numpy as np
-from app.engine import PARAMS, Invalid, raw, simulate, validate
+from app.engine import PARAMS, Invalid, raw, simulate, validate, final_results, references
 from app.runner import run_limited
 
 PARAMETERS = {
-    'uniform': {'low': 0, 'high': 1}, 'normal': {'mean': 0, 'std': 1},
-    'lognormal': {'mean': 0, 'sigma': .5}, 'weibull': {'shape': 2, 'scale': 3},
-    'gamma': {'shape': 2, 'scale': 3}, 'beta': {'alpha': 2, 'beta': 5},
-    'bernoulli': {'p': .3}, 'categorical': {'values': [-2, 4], 'probabilities': [.25, .75]},
-    'generalized_poisson': {'lam': 3, 'theta': .3}, 'exponential': {'rate': 2},
-    'zero_inflated_poisson': {'lam': 3, 'pi': .4}, 'logarithmic': {'p': .5},
+    'uniform': {'low': 0, 'high': 1}, 'normal': {'mean': 5, 'std': .5},
+    'lognormal': {'mu': 0, 'sigma': .25}, 'weibull': {'shape': 2, 'scale': .8},
+    'gamma': {'shape': 5, 'scale': .3}, 'beta': {'alpha': 2, 'beta': 5},
+    'bernoulli': {'p': .3}, 'categorical': {'values': [2, 4], 'probabilities': [.25, .75]},
+    'generalized_poisson': {'lam': 1, 'theta': .03}, 'exponential': {'rate': 2},
+    'zero_inflated_poisson': {'lam': 1, 'pi': .3}, 'logarithmic': {'p': .2},
 }
 
 def spec(d='normal'):
@@ -20,18 +20,25 @@ def spec(d='normal'):
             'variables': [{'name': 'X1', 'distribution': d, 'params': PARAMETERS[d].copy()}],
             'expression': {'var': 'X1'}}
 
+def sum_ast(names):
+    node = {'var':names[0]}
+    for name in names[1:]:node={'op':'add','args':[node,{'var':name}]}
+    return node
+
 def sleeping_worker(conn, payload):
     time.sleep(10)
 
 class EngineTests(unittest.TestCase):
-    def test_three_variables_global_limit_for_all_dimensions(self):
+    def test_five_variables_per_component_up_to_fifteen_total(self):
         for dimensions in (1, 2, 3):
-            p=spec();p.pop('expression');p.update(version=2,expressions=[{'var':'X3'}]*dimensions)
-            p['variables']=[{'name':f'X{i}', 'distribution':'normal', 'params':{'mean':0,'std':1}} for i in range(1,4)]
-            self.assertEqual(len(simulate(p)),100*dimensions)
-            p['variables'].append({'name':'X4','distribution':'normal','params':{'mean':0,'std':1}})
-            with self.assertRaises(Invalid):validate(p)
-        for name in ('X4','X10'):
+            p = spec('uniform'); p.pop('expression')
+            p.update(version=2, expressions=[]); p['variables'] = []
+            for d in range(dimensions):
+                names = [f'X{i}' for i in range(d*5+1, d*5+6)]
+                p['variables'].extend({'name':name,'distribution':'uniform','params':{'low':0,'high':1}} for name in names)
+                p['expressions'].append(sum_ast(names))
+            self.assertEqual(len(simulate(p, seed=42)), 100*dimensions)
+        for name in ('X0', 'X16', 'X01', 'X1x'):
             p=spec();p['variables'][0]['name']=name;p['expression']={'var':name}
             with self.assertRaises(Invalid):validate(p)
 
@@ -41,7 +48,7 @@ class EngineTests(unittest.TestCase):
             p['expressions']=[{'var':'X1'}, {'op':'mul','args':[{'const':2},{'var':'X1'}]}, {'op':'sub','args':[{'var':'X1'},{'var':'X1'}]}][:dimensions]
             values=np.array(simulate(p, seed=42)).reshape(100,dimensions)
             self.assertEqual(values.size,100*dimensions)
-            if dimensions>=2:np.testing.assert_array_equal(values[:,1],2*values[:,0])
+            if dimensions>=2:np.testing.assert_allclose(values[:,1],2*values[:,0],atol=.002,rtol=0)
             if dimensions==3:np.testing.assert_array_equal(values[:,2],np.zeros(100))
 
     def test_invalid_vector_schemas_and_component_failure(self):
@@ -60,18 +67,18 @@ class EngineTests(unittest.TestCase):
                 self.assertTrue(np.isfinite(out).all())
 
     def test_theoretical_means(self):
-        means = {'uniform': .5, 'normal': 0, 'lognormal': math.exp(.125),
-                 'weibull': 3 * math.gamma(1.5), 'gamma': 6, 'beta': 2/7,
-                 'bernoulli': .3, 'categorical': 2.5,
-                 'generalized_poisson': 3/.7, 'exponential': .5,
-                 'zero_inflated_poisson': 1.8, 'logarithmic': -1/math.log(.5)}
+        means = {'uniform': .5, 'normal': 5, 'lognormal': math.exp(.25**2/2),
+                 'weibull': .8*math.gamma(1.5), 'gamma': 1.5, 'beta': 2/7,
+                 'bernoulli': .3, 'categorical': 3.5, 'generalized_poisson': 1/.97,
+                 'exponential': .5, 'zero_inflated_poisson': .7,
+                 'logarithmic': -.2/(.8*math.log(.8))}
         for d in means:
             with self.subTest(d=d):
                 draws = raw(np.random.default_rng(7), d, PARAMETERS[d], 100000)
                 tolerance = max(.015, 6 * np.std(draws)/math.sqrt(len(draws)))
                 self.assertAlmostEqual(float(np.mean(draws)), means[d], delta=tolerance)
         g = raw(np.random.default_rng(8), 'generalized_poisson', PARAMETERS['generalized_poisson'], 100000)
-        self.assertAlmostEqual(float(np.var(g)), 3/.7**3, delta=.25)
+        self.assertAlmostEqual(float(np.var(g)), 1/.97**3, delta=.05)
 
     def test_repeated_variable_uses_same_realization(self):
         p = spec(); p['expression'] = {'op': 'sub', 'args': [{'var': 'X1'}, {'var': 'X1'}]}
@@ -83,8 +90,8 @@ class EngineTests(unittest.TestCase):
         self.assertTrue(all(1 <= x <= 2 for x in simulate(p)))
 
     def test_truncated_domain(self):
-        p = spec(); p['variables'][0]['domain'] = {'min': -.1, 'max': .1}
-        self.assertTrue(all(-.1 <= x <= .1 for x in simulate(p)))
+        p = spec(); p['variables'][0]['domain'] = {'min': 4.9, 'max': 5.1}
+        self.assertTrue(all(4.9 <= x <= 5.1 for x in simulate(p)))
 
     def test_invalid_domain_fails_without_saving(self):
         p = spec('uniform'); p['variables'][0]['domain'] = {'min': 2, 'max': 3}
@@ -120,7 +127,7 @@ class EngineTests(unittest.TestCase):
             p=spec('uniform');p['expression']=expression
             with self.assertRaises(Invalid): simulate(p)
         # A bare variable must respect the same output bound as an operation.
-        p=spec('lognormal'); p['variables'][0]['params']={'mean':700,'sigma':.1}
+        p=spec('lognormal'); p['variables'][0]['params']={'mu':700,'sigma':.1}
         with self.assertRaises(Invalid): simulate(p,seed=42)
 
     def test_worker_and_hard_timeout(self):

@@ -2,7 +2,7 @@ import secrets
 import json
 from datetime import datetime, timezone, timedelta
 from google.cloud import firestore
-from .engine import components
+from .engine import components, final_results
 
 class LimitReached(Exception): pass
 class Conflict(Exception): pass
@@ -94,7 +94,7 @@ class Store:
                   'dimensions': len(components(payload)),
                   # JSON text avoids Firestore's map/array nesting depth limit.
                   'spec_json': json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(',', ':')),
-                  'results': results}
+                  'results': final_results(payload, results)}
         @firestore.transactional
         def commit(tx):
             data = ref.get(transaction=tx, timeout=15).to_dict() or {}

@@ -24,7 +24,8 @@ def store():
     return _store
 
 def user(request: Request):
-    value = request.headers.get('authorization', '')
+    values = request.headers.getlist('authorization')
+    value = values[0] if len(values) == 1 else ''
     if not value.startswith('Bearer ') or len(value) > 10000:
         raise HTTPException(401, 'Inicia sesión con Google.')
     try:
@@ -77,10 +78,29 @@ def delete(eid: str, uid=Depends(user)):
 
 @app.post('/v1/experiments', status_code=201)
 async def create(request: Request, uid=Depends(user)):
+    # Strict wire format is checked before validation, admission or computation.
+    content_types = request.headers.getlist('content-type')
+    if len(content_types) != 1:
+        raise HTTPException(415, 'Envía un único Content-Type: application/json.')
+    parts = [p.strip().lower() for p in content_types[0].split(';')]
+    if parts[0] != 'application/json' or len(parts) > 2 or (len(parts) == 2 and parts[1] not in ('charset=utf-8', 'charset="utf-8"')):
+        raise HTTPException(415, 'Se requiere application/json codificado en UTF-8.')
+    encodings = request.headers.getlist('content-encoding')
+    if len(encodings) > 1 or (encodings and encodings[0].strip().lower() != 'identity'):
+        raise HTTPException(415, 'No se admiten cuerpos comprimidos.')
+    lengths = request.headers.getlist('content-length')
+    if len(lengths) > 1 or (lengths and not re.fullmatch(r'[0-9]{1,10}', lengths[0])):
+        raise HTTPException(400, 'Content-Length inválido.')
+    declared = int(lengths[0]) if lengths else None
+    if declared is not None and declared > 32768:
+        raise HTTPException(413, 'JSON demasiado grande (32 KiB).')
     chunks = bytearray()
     async for chunk in request.stream():
+        if len(chunks) + len(chunk) > 32768:
+            raise HTTPException(413, 'JSON demasiado grande (32 KiB).')
         chunks.extend(chunk)
-        if len(chunks) > 32768: raise HTTPException(413, 'JSON demasiado grande (32 KiB).')
+    if declared is not None and declared != len(chunks):
+        raise HTTPException(400, 'El tamaño del cuerpo no coincide con Content-Length.')
     def no_duplicates(pairs):
         out = {}
         for key, value in pairs:
@@ -88,12 +108,13 @@ async def create(request: Request, uid=Depends(user)):
             out[key] = value
         return out
     try:
-        payload = json.loads(chunks, object_pairs_hook=no_duplicates,
+        payload = json.loads(chunks.decode('utf-8'), object_pairs_hook=no_duplicates,
                              parse_constant=lambda _: (_ for _ in ()).throw(Invalid('Número JSON inválido.')))
         validate(payload)
     except (ValueError, TypeError, RecursionError, OverflowError):
         raise HTTPException(422, 'Formato inválido. Revisa variables, parámetros, dominio y expresión.')
-    rid = request.headers.get('idempotency-key', '')
+    request_ids = request.headers.getlist('idempotency-key')
+    rid = request_ids[0] if len(request_ids) == 1 else ''
     identifier(rid)
     if not gate.acquire(blocking=False): raise HTTPException(429, 'Hay una simulación en curso. Reintenta.')
     token = secrets.token_hex(24)
@@ -121,6 +142,7 @@ async def create(request: Request, uid=Depends(user)):
         except LimitReached: raise HTTPException(409, 'Ya tienes 10 experimentos. Borra uno.')
         except Conflict: raise HTTPException(409, 'La clave ya pertenece a otra solicitud.')
         except LeaseLost: raise HTTPException(409, 'La reserva venció. Consulta la tabla antes de reintentar.')
+        except Invalid as exc: raise HTTPException(422, str(exc))
     finally:
         try:
             if admitted: await run_in_threadpool(store().finish, uid, token)

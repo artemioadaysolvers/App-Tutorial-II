@@ -1,6 +1,6 @@
 # Android / azar.
 
-Consulta `../README.md` y `../docs/Manual_Android_Google_Cloud.pdf` para preparar Google Cloud y generar el APK.
+Consulta `../docs/CAMBIOS.md`, `../docs/Manual.md` y `../README.md` para preparar Google Cloud y generar el APK.
 
 ```powershell
 npm ci

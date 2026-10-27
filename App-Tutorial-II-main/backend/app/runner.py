@@ -1,6 +1,7 @@
 """A killed child process enforces the wall clock bound, not a thread timeout."""
 import multiprocessing as mp
 import time
+from .engine import validate, final_results
 
 def worker(conn, payload):
     try:
@@ -12,6 +13,7 @@ def worker(conn, payload):
         conn.close()
 
 def run_limited(payload, seconds=60, target=worker):
+    validate(payload)  # No process starts for an invalid specification.
     context = mp.get_context('spawn')
     receiver, sender = context.Pipe(duplex=False)
     process = context.Process(target=target, args=(sender, payload), daemon=True)
@@ -25,9 +27,13 @@ def run_limited(payload, seconds=60, target=worker):
             response = receiver.recv()
         except EOFError as exc:
             raise ValueError('El proceso de simulación terminó inesperadamente.') from exc
-        if 'error' in response:
+        if type(response) is not dict:
+            raise ValueError('Respuesta inválida del proceso de simulación.')
+        if set(response) == {'error'} and type(response['error']) is str:
             raise ValueError(response['error'])
-        return response['results']
+        if set(response) != {'results'}:
+            raise ValueError('Respuesta inválida del proceso de simulación.')
+        return final_results(payload, response['results'])
     finally:
         if process.is_alive(): process.terminate()
         process.join(timeout=1)

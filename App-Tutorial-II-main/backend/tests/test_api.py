@@ -30,11 +30,11 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.create(10).status_code,201)
         self.assertEqual(self.client.get('/v1/usage').json()['used'],11)
     def test_rejects_payload_without_charging(self):
-        for text in ['{}','{"version":1,"version":1}',json.dumps(spec()).replace('"std": 1','"std": NaN')]:
-            self.assertEqual(self.client.post('/v1/experiments',content=text).status_code,422)
-        self.assertEqual(self.client.post('/v1/experiments',content=' '*33000).status_code,413)
+        for text in ['{}','{"version":1,"version":1}',json.dumps(spec()).replace('"std": 0.5','"std": NaN')]:
+            self.assertEqual(self.client.post('/v1/experiments',content=text,headers={'Content-Type':'application/json'}).status_code,422)
+        self.assertEqual(self.client.post('/v1/experiments',content=' '*33000,headers={'Content-Type':'application/json'}).status_code,413)
         self.assertEqual(self.store.usage('alice')['used'],0)
-        p=spec();p['variables']=[{'name':f'X{i}','distribution':'normal','params':{'mean':0,'std':1}} for i in range(1,5)]
+        p=spec();p['variables']=[{'name':f'X{i}','distribution':'normal','params':{'mean':5,'std':.5}} for i in range(1,5)]
         self.assertEqual(self.create(0,p).status_code,422)
         self.assertEqual(self.store.usage('alice')['used'],0)
     def test_timeout_no_persistence_releases_lock_charges_attempt(self):

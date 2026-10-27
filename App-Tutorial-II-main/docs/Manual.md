@@ -1,3 +1,5 @@
+> Actualización 27/10/2026: consulta también [CAMBIOS.md](CAMBIOS.md) para los rangos exactos, cinco variables por componente y truncamiento a tres decimales. El PDF distribuido conserva el manual original.
+
 # Manual de Android y Google Cloud
 
 
@@ -252,13 +254,11 @@ El proyecto no firma release con la clave pública de debug. assembleRelease des
 
 ## 11 / Parámetros y dominios
 
-<b>Continuas:</b> Uniforme: low &lt; high. Normal: mean libre, std &gt; 0. LogNormal: mean y sigma del logaritmo; sigma &gt; 0. Weibull: shape y scale &gt; 0. Gamma: shape y scale &gt; 0. Beta: alpha y beta &gt; 0. Exponencial: rate &gt; 0, media 1/rate. La exponencial se clasifica correctamente como continua.
-
-<b>Discretas:</b> Bernoulli: p en [0,1]. Categórica: escribe valores numéricos únicos separados por comas y, en el mismo orden, sus probabilidades; deben sumar 1. Admite entre 1 y 50 categorías. Poisson cero-inflada: lam &gt; 0, pi en [0,1]. Logarítmica: serie logarítmica, p en (0,1), soporte 1,2,3...
+Los rangos y valores predeterminados vigentes para las doce distribuciones se detallan en [CAMBIOS.md](CAMBIOS.md). Se validan en el cliente y en el servidor. La lognormal utiliza mu (log-location) y sigma (log-scale): ln(X) ~ Normal(mu, sigma²). La categórica permite de uno a diez valores únicos en [0,10] y probabilidades que sumen 1.
 
 Poisson generalizada: variante explícita
 
-Se implementa Consul-Jain con dispersión no negativa: 0 &lt; lambda ≤ 100 y 0 ≤ theta ≤ 0.9. Su media es lambda/(1-theta) y su varianza lambda/(1-theta)^3. Con theta=0 se reduce a Poisson. No se incluye dispersión negativa en esta versión.
+Se implementa Consul-Jain con dispersión no negativa: 0.1 ≤ lambda ≤ 1 y 0 ≤ theta ≤ 0.05. Su media es lambda/(1-theta) y su varianza lambda/(1-theta)^3. Con theta=0 se reduce a Poisson. No se incluye dispersión negativa en esta versión.
 
 ```
 P(K=0) = exp(-lambda)
@@ -275,7 +275,7 @@ Mínimo y máximo son inclusivos y deben cumplir mínimo &lt; máximo si están 
 
 ## 12 / Escribe expresiones seguras
 
-Los nombres disponibles son X1 a X3. Agrega cada variable antes de usarla. Quitar una variable que aparece en la expresión obliga a corregirla. Los parámetros pueden redefinirse quitando y volviendo a agregar la variable.
+Los nombres disponibles son X1 a X15. Cada componente admite hasta cinco variables distintas; se permiten 5, 10 o 15 variables definidas en 1D, 2D o 3D, respectivamente. Todas deben utilizarse. Agrega cada variable antes de usarla. Quitar una variable que aparece en la expresión obliga a corregirla. Los parámetros pueden redefinirse quitando y volviendo a agregar la variable.
 
 ```
 X1 + 2*X2
@@ -307,7 +307,7 @@ POST /v1/experiments recibe JSON con seis campos obligatorios, sin campos descon
   "samples": 100,
   "variables": [
     {"name":"X1", "distribution":"normal",
-     "params":{"mean":10,"std":2}, "domain":{}}
+     "params":{"mean":5,"std":0.5}, "domain":{}}
   ],
   "expressions": [
     {"var":"X1"},
@@ -337,7 +337,7 @@ GET    /v1/usage                 Cupo diario y estado de cuenta
 
 Todos los endpoints de datos exigen Firebase ID token. En cada consulta el UID se obtiene del token verificado. Una cuenta distinta recibe lista propia y 404 al intentar consultar o borrar un experimento ajeno.
 
-<b>Qué se guarda:</b> ID, título, fecha UTC, color, definición de variables, parámetros, dominio, AST de las componentes y cien vectores finales, en una lista plana de 100/200/300 números por filas: x0,y0,z0,x1,y1,z1,... Dimensions indica 1, 2 o 3. No se almacena el vector que tomó cada variable. Esos valores intermedios se descartan al terminar el proceso.
+<b>Qué se guarda:</b> ID, título, fecha UTC, color, definición de variables, parámetros, dominio, AST de las componentes y cien vectores finales, en una lista plana de 100/200/300 números por filas: x0,y0,z0,x1,y1,z1,... Dimensions indica 1, 2 o 3. Cada resultado final se trunca hacia cero a tres decimales antes de guardarse. No se almacena el vector que tomó cada variable. Esos valores intermedios se descartan al terminar el proceso.
 
 La lista omite resultados y definición. Al tocar Abrir se pide el detalle al servidor y se construye el histograma en Android. El color se elige aleatoriamente una vez y se guarda; pueden coincidir colores por azar.
 
@@ -350,9 +350,9 @@ Cambiar particiones redistribuye los mismos cien resultados. Si todos son iguale
 
 ## 15 / Límites y ejecución
 
-<b>Entrada:</b> 1 a 3 variables únicas X1...X3, exactamente 100 realizaciones, protocolo 1 o 2, título de 1 a 80 caracteres, JSON de hasta 32 KiB, números finitos de magnitud hasta 1e9. Booleanos no cuentan como números. Se rechazan claves duplicadas y campos desconocidos.
+<b>Entrada:</b> hasta cinco variables distintas por componente; 5/10/15 variables únicas X1...X15 en 1D/2D/3D, exactamente 100 realizaciones, protocolo 1 o 2, título de 1 a 80 caracteres, JSON de hasta 32 KiB, números finitos de magnitud hasta 1e9. Booleanos no cuentan como números. Se rechazan claves duplicadas y campos desconocidos.
 
-<b>Expresión:</b> hasta 500 caracteres en Android; en la API hasta 127 nodos y profundidad 20 por componente (1 a 3). Al menos una referencia a una variable aleatoria definida. Solo operadores y funciones autorizados.
+<b>Expresión:</b> hasta 500 caracteres en Android; en la API hasta 127 nodos y profundidad 20 por componente (1 a 3). Al menos una referencia a una variable aleatoria definida. Hasta cinco variables distintas por componente, todas definidas. Solo operadores y funciones autorizados.
 
 <b>Almacenamiento:</b> máximo 10 experimentos por cuenta. La reserva y el guardado comprueban el límite mediante transacciones Firestore. Esto impide que solicitudes simultáneas desde distintas instancias excedan el límite. Borrar también modifica Firestore mediante transacción.
 
@@ -360,7 +360,7 @@ Cambiar particiones redistribuye los mismos cien resultados. Si todos son iguale
 
 Autenticación, red y escritura de base de datos añaden tiempo al cálculo. El HTTP de Cloud Run y la espera de Android son de 90 segundos. Si una respuesta se pierde, puede haberse guardado antes: vuelve a consultar la lista antes de crear otro formulario.
 
-<b>Códigos:</b> 401 sesión inválida; 404 experimento ausente; 408 simulación vencida; 409 límite o conflicto de clave; 413 cuerpo grande; 422 formato, parámetros o cálculo inválido; 429 cuenta/instancia ocupada o cuota diaria; 503 servicio temporalmente no disponible.
+<b>Códigos:</b> 401 sesión inválida; 404 experimento ausente; 408 simulación vencida; 409 límite o conflicto de clave; 400 cabeceras incoherentes; 413 cuerpo grande; 415 tipo de contenido o codificación no admitidos; 422 formato, parámetros o cálculo inválido; 429 cuenta/instancia ocupada o cuota diaria; 503 servicio temporalmente no disponible.
 
 Las variables base son independientes; las componentes pueden ser dependientes por compartirlas. No hay semilla editable en la app. Las pruebas sí usan semillas para comprobar el motor de manera reproducible.
 
@@ -478,7 +478,7 @@ Conserva tus claves de firma fuera del proyecto compartido. El ZIP contiene las 
 
 ## 20 / Vectores y gráficos nativos
 
-<b>1.</b> Crea las variables base (máximo tres entre todas las componentes). En Nuevo experimento elige 1D, 2D o 3D. Escribe una expresión para X, otra para Y si corresponde y otra para Z en 3D. Los ejes X/Y/Z son componentes de salida; X1...X3 son las variables base.
+<b>1.</b> Crea las variables base (máximo cinco distintas por componente y quince en un experimento 3D). En Nuevo experimento elige 1D, 2D o 3D. Escribe una expresión para X, otra para Y si corresponde y otra para Z en 3D. Los ejes X/Y/Z son componentes de salida; X1...X15 son las variables base.
 
 ```
 1D: X = X1 + X2              100 números
