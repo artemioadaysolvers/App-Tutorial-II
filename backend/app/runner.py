@@ -3,6 +3,8 @@ import multiprocessing as mp
 import time
 from .engine import validate, final_results
 
+SIMULATION_TIMEOUT_SECONDS = 30
+
 def worker(conn, payload):
     try:
         from .engine import simulate
@@ -12,8 +14,9 @@ def worker(conn, payload):
     finally:
         conn.close()
 
-def run_limited(payload, seconds=60, target=worker):
+def run_limited(payload, seconds=SIMULATION_TIMEOUT_SECONDS, target=worker):
     validate(payload)  # No process starts for an invalid specification.
+    seconds = min(seconds, SIMULATION_TIMEOUT_SECONDS)
     context = mp.get_context('spawn')
     receiver, sender = context.Pipe(duplex=False)
     process = context.Process(target=target, args=(sender, payload), daemon=True)
@@ -22,7 +25,7 @@ def run_limited(payload, seconds=60, target=worker):
     sender.close()
     try:
         if not receiver.poll(max(0, seconds - (time.monotonic() - start))):
-            raise TimeoutError('Se alcanzó el máximo de 60 segundos de simulación.')
+            raise TimeoutError(f'La simulación superó el límite de {seconds:g} segundos.')
         try:
             response = receiver.recv()
         except EOFError as exc:

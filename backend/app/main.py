@@ -10,7 +10,7 @@ from firebase_admin import auth
 from fastapi import FastAPI, Request, HTTPException, Depends
 from starlette.concurrency import run_in_threadpool
 from .engine import validate, Invalid
-from .runner import run_limited
+from .runner import run_limited, SIMULATION_TIMEOUT_SECONDS
 from .store import Store, LimitReached, Conflict, Busy, DailyLimit, LeaseLost
 
 app = FastAPI(title='Monte Carlo Lab', version='2.0.0')
@@ -131,8 +131,8 @@ async def create(request: Request, uid=Depends(user)):
         admitted = True
         try:
             # Even a delayed admission response cannot start a child beyond its
-            # distributed lease. Leave 15s for persistence, never exceed 60s.
-            seconds = min(60, 120 - (time.monotonic() - admission_start) - 15)
+            # distributed lease. Leave 15s for persistence, never exceed 30s.
+            seconds = min(SIMULATION_TIMEOUT_SECONDS, 120 - (time.monotonic() - admission_start) - 15)
             if seconds <= 0: raise TimeoutError('La reserva venció antes del cálculo. Reintenta.')
             results = await run_in_threadpool(run_limited, payload, seconds=seconds)
         except TimeoutError as exc: raise HTTPException(408, str(exc))

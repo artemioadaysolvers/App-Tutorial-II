@@ -1,3 +1,4 @@
+Manual paso a paso actualizado: [PDF](docs/Manual_Android_Google_Cloud.pdf) y [versión editable](docs/Manual.md). Configuración manual en Android Studio y consolas de Google Cloud/Firebase, sin deploy.sh ni configure.mjs. Consulta también [CAMBIOS.md](docs/CAMBIOS.md) y [VERIFICACION.md](docs/VERIFICACION.md).
 
 Tutorial para App Móviles II 
 

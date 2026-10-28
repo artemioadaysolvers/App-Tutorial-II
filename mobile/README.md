@@ -1,14 +1,12 @@
 # Android / azar.
 
-Consulta `../docs/CAMBIOS.md`, `../docs/Manual.md` y `../README.md` para preparar Google Cloud y generar el APK.
+Sigue el manual paso a paso de esta entrega:
 
-```powershell
-npm ci
-npm run configure -- https://TU-SERVICIO.run.app
-npm run typecheck
-npm test
-```
+- [Manual PDF](../docs/Manual_Android_Google_Cloud.pdf)
+- [Manual editable](../docs/Manual.md)
 
-Antes de `configure`, agrega tu archivo real `android/app/google-services.json` para el paquete `com.montecarlolab`, con Google Auth activado y cliente Web OAuth tipo 3. Sin él se puede compilar la pantalla de configuración, pero el login no está disponible.
+La ruta principal configura Google Cloud desde el navegador y la app editando src/config.ts en Android Studio. No requiere ejecutar configure.mjs ni deploy.sh.
 
-Abre `android` en Android Studio con JDK 17. SDK 36, Build Tools 36.0.0, NDK 27.1.12297006 y CMake 3.22.1. Genera un APK release con tu propia firma mediante el asistente de Android Studio. Un release firmado contiene el bundle JS y funciona sin Metro. La variante debug requiere `npm start`.
+Abre mobile/android en Android Studio. Las dependencias React Native se instalan con npm.cmd ci desde mobile en su terminal integrada. El manual detalla JDK 17, SDK API 36, Build Tools 36.0.0, NDK 27.1.12297006, CMake 3.22.1, registro de firmas, google-services.json, OAuth Web client ID y APK release firmado.
+
+No se incluyen credenciales reales. La app permanece con configured=false hasta que completes tus datos.

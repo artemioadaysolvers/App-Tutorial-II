@@ -1,0 +1,27 @@
+{
+  "source": {
+    "storageSource": {
+      "bucket": "BUCKET",
+      "object": "backend.zip"
+    }
+  },
+  "steps": [
+    {
+      "name": "gcr.io/cloud-builders/docker",
+      "args": [
+        "build",
+        "-t",
+        "us-central1-docker.pkg.dev/PID/montecarlo/api:manual-v1",
+        "."
+      ]
+    }
+  ],
+  "images": [
+    "us-central1-docker.pkg.dev/PID/montecarlo/api:manual-v1"
+  ],
+  "serviceAccount": "projects/PID/serviceAccounts/montecarlo-build@PID.iam.gserviceaccount.com",
+  "options": {
+    "logging": "CLOUD_LOGGING_ONLY"
+  },
+  "timeout": "1200s"
+}

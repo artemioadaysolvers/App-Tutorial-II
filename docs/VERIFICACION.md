@@ -29,4 +29,9 @@ No se realizó un despliegue en Google Cloud, inicio de sesión Google real, com
 
 No se ejecutó Docker. Su Dockerfile conserva Python 3.12.10; las pruebas locales usaron Python 3.12.14.
 
-El ZIP conserva el PDF del manual original de instalación; los rangos y reglas vigentes están en CAMBIOS.md y Manual.md. Incluye config.ts sin credenciales (configured=false); debes ejecutar el paso de configuración original con tu proyecto Google antes de usar la aplicación conectada.
+El ZIP incorpora un manual nuevo de 28 páginas para Android Studio y Google Cloud, tanto en PDF como en Markdown. Las 28 páginas se renderizaron y revisaron visualmente; sin texto fuera de márgenes, con marcadores y 32 enlaces oficiales. Se comprobó que el JSON extraído de su página 16 coincide con el archivo editable. Los rangos y reglas vigentes también están en CAMBIOS.md. Incluye config.ts sin credenciales (configured=false); debes completar el paso de configuración manual con tu proyecto Google antes de usar la aplicación conectada.
+
+
+## Actualización del corte de cálculo
+
+Se cambió únicamente el límite de cálculo de 60 a 30 segundos y sus mensajes/documentación. HTTP y espera de Android conservan 90 segundos. Verificación de esta actualización: 12 pruebas del motor y 3 pruebas de timeout aprobadas en CPython 3.10 / NumPy 2.2.6. Se comprobó la terminación de un proceso con bucle infinito, sin hijos activos, usando un plazo reducido para la prueba; la configuración real sigue siendo 30 segundos. También se verificó que una llamada interna con seconds=3600 queda limitada a 30. Las comprobaciones completas de API y TypeScript arriba corresponden a la entrega precedente; no se repitieron para este cambio. La única modificación TS es el mensaje visual de espera (30 s). El manual conserva 28 páginas y se revisó visualmente la página actualizada.

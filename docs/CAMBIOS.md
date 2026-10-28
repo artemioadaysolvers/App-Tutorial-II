@@ -52,13 +52,13 @@ Antes de adquirir una reserva o iniciar el proceso se exige:
 6. AST de hasta 127 nodos y profundidad 20 por componente, operadores autorizados, al menos una variable y como máximo cinco distintas.
 7. Una única Idempotency-Key con el formato UUID esperado.
 
-Después se mantienen la cuota de 25 intentos diarios por usuario, máximo 10 experimentos guardados, exclusión mutua por cuenta entre instancias, idempotencia y reserva con caducidad. El lanzador y el proceso hijo vuelven a validar el esquema antes de calcular. El proceso conserva su plazo máximo de 60 segundos. Un error no guarda resultados parciales y libera la reserva.
+Después se mantienen la cuota de 25 intentos diarios por usuario, máximo 10 experimentos guardados, exclusión mutua por cuenta entre instancias, idempotencia y reserva con caducidad. El lanzador y el proceso hijo vuelven a validar el esquema antes de calcular. El proceso conserva su plazo máximo de 30 segundos. Un error no guarda resultados parciales y libera la reserva.
 
 La autenticación e IAM de Google y las reglas Firestore existentes se conservan. Este cambio valida entradas y controla el cálculo; no agrega App Check ni modifica el despliegue o los permisos de una cuenta real.
 
 ## Preparación y comprobación
 
-El archivo mobile/src/config.ts incluido contiene configured=false y cadenas vacías. Ejecuta la configuración original con tu google-services.json real antes de usar Google Login y la API.
+El archivo mobile/src/config.ts incluido contiene configured=false y cadenas vacías. Completa la configuración manual de Manual.md con tu google-services.json real, URL API y OAuth Web client ID antes de usar Google Login y la API.
 
 Desde backend:
 
@@ -75,4 +75,9 @@ npm run typecheck
 npm test
 ```
 
-Consulta VERIFICACION.md para los resultados y límites de las pruebas de esta entrega. El PDF incluido es el manual original de instalación; para estos cambios de comportamiento prevalecen este documento y Manual.md.
+Consulta VERIFICACION.md para los resultados y límites de las pruebas de esta entrega. El PDF incluido y Manual.md contienen el manual paso a paso actualizado para configurar manualmente Android Studio, Google Cloud y Firebase. El JSON editable docs/solicitud-cloud-build.json acompaña ese procedimiento.
+
+
+## Corte de cálculo: 30 segundos
+
+El proceso de simulación tiene un límite duro de 30 segundos, incluyendo su inicialización. Al vencer, se termina el proceso hijo y no se guardan resultados parciales. El límite está compartido por el lanzador y la API; incluso un llamador interno no puede ampliarlo a una hora. La configuración HTTP de Cloud Run y la espera de Android permanecen en 90 segundos.
